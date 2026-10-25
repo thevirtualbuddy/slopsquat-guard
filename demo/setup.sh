@@ -16,11 +16,32 @@ command -v failproofai >/dev/null || { echo "failproofai is not installed (npm i
 command -v node >/dev/null || { echo "node is not installed"; exit 1; }
 
 echo "→ Demo project: $DEMO_DIR"
-mkdir -p "$DEMO_DIR/.failproofai/policies"
+mkdir -p "$DEMO_DIR"
 
-# Project-scoped: Failproof loads <project>/.failproofai/policies/*policies.mjs
-# automatically, for this project only. The file name must end in policies.mjs.
-cp "$REPO/slopsquat.mjs" "$DEMO_DIR/.failproofai/policies/slopsquat-policies.mjs"
+# If the published pack is installed machine-wide, it already guards this
+# project; a second, project-scoped copy would make every check run twice.
+PACKS="$HOME/.failproofai/policies/packs/installed.json"
+if [ -f "$PACKS" ] && grep -q "slopsquat-guard" "$PACKS"; then
+  echo "→ The slopsquat-guard pack is installed machine-wide; using it (no project copy)"
+  rm -f "$DEMO_DIR/.failproofai/policies/slopsquat-policies.mjs"
+else
+  # Project-scoped: Failproof loads <project>/.failproofai/policies/*policies.mjs
+  # automatically, for this project only. The file name must end in policies.mjs.
+  mkdir -p "$DEMO_DIR/.failproofai/policies"
+  POLICY="$DEMO_DIR/.failproofai/policies/slopsquat-policies.mjs"
+  cp "$REPO/slopsquat.mjs" "$POLICY"
+  # Load check only. Deliberately NOT `failproofai policies --install`: that
+  # also wires a second set of Claude Code hooks into the project, so every
+  # policy would run twice alongside the user-level hooks.
+  echo "→ Checking the policy loads"
+  node --import "$REPO/test/register-stub.mjs" --input-type=module -e "
+    const { registered } = await import('$REPO/test/failproofai-stub.mjs');
+    await import('$POLICY');
+    const names = registered.map((p) => p.name);
+    if (names.length < 2) { console.error('  expected 2 policies, got: ' + names.join(', ')); process.exit(1); }
+    console.log('  loaded: ' + names.join(', '));
+  "
+fi
 
 if [ ! -f "$DEMO_DIR/package.json" ]; then
   cat > "$DEMO_DIR/package.json" <<'EOF'
@@ -48,10 +69,13 @@ app.listen(3000, () => console.log("listening on :3000"));
 EOF
 fi
 
-echo "→ Validating the policy with Failproof"
-(cd "$DEMO_DIR" && failproofai policies --install --custom .failproofai/policies/slopsquat-policies.mjs --scope project)
+if [ -f "$DEMO_DIR/.claude/settings.json" ] && grep -q "failproofai" "$DEMO_DIR/.claude/settings.json"; then
+  echo "▲ $DEMO_DIR/.claude/settings.json has Failproof hooks (an earlier version of this script added them)."
+  echo "  With your user-level hooks that runs every policy twice. Remove it:  rm -rf $DEMO_DIR/.claude"
+fi
 
-# A pause from a previous rehearsal would let scene 2 straight through.
+# Pauses are per Claude Code session, so a new session is the real reset;
+# this clears rehearsal leftovers too.
 rm -f "$HOME/.failproofai/slopsquat/pauses.json"
 
 echo "→ Picking live package names"
