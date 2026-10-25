@@ -30,12 +30,19 @@ const DAY = 86_400_000;
 const ago = (d) => new Date(Date.now() - d * DAY).toISOString();
 const res = (status, body, text) => ({ ok: status < 300, status, json: async () => body, text: async () => text ?? JSON.stringify(body) });
 const fetched = [];
+const blipped = new Set();
+const socketError = () => Object.assign(new TypeError("fetch failed"), { cause: { code: "UND_ERR_SOCKET", message: "other side closed" } });
 globalThis.fetch = async (url, opts = {}) => {
   const u = String(url);
   fetched.push(u);
   const last = decodeURIComponent(u.split("/").pop().replace(/\.json$/, "").replace(/\?.*$/, ""));
   const has = (p) => u.includes(p);
-  if (has("flaky-")) throw new TypeError("fetch failed");
+  if (has("flaky-")) throw socketError();
+  // blip-*: the first request to each URL drops (a stale kept-alive socket), the retry works
+  if (has("blip-") && !blipped.has(u)) {
+    blipped.add(u);
+    throw socketError();
+  }
   if (has("ghost-")) return res(404, { error: "not found" }, "not found");
   // npm
   if (u.startsWith("https://registry.npmjs.org/") && opts.method === "HEAD") return res(200, {});
@@ -253,6 +260,25 @@ test("unverifiable lookups: warn by default, or allow / deny when configured", a
   assert.match(denied.reason, /^Slopsquat guard blocked this install/);
   const legacy = await bash(`npm i ${uniq("flaky")}`, { params: { onLookupError: "instruct" } });
   assert.match(legacy.reason, /^PAUSED/, "the old 'instruct' value now means warn");
+});
+
+test("a dropped connection is retried once, so a transient blip does not pause", async () => {
+  const pkg = uniq("blip");
+  const r = await bash(`npm i ${pkg}`);
+  assert.equal(r.decision, "allow", r.reason);
+  assert.ok(fetched.filter((u) => u.includes(pkg)).length >= 3, "the failed request was repeated");
+});
+
+test("a persistent network error keeps its cause in the message", async () => {
+  const r = await bash(`npm i ${uniq("flaky")}`);
+  assert.match(r.reason, /could not be verified \(fetch failed: UND_ERR_SOCKET other side closed\)/);
+});
+
+test("HTTP errors are not retried", async () => {
+  const before = fetched.length;
+  await bash(`npm i ${uniq("ghost")}`);
+  const calls = fetched.slice(before);
+  assert.equal(new Set(calls).size, calls.length, "no URL was requested twice");
 });
 
 // ---- 7. Go untagged wording -------------------------------------------------

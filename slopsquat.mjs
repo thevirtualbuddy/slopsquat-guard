@@ -1006,8 +1006,31 @@ class HttpStatus extends Error {
   }
 }
 
+// fetch with one retry on a network-level failure. Node keeps connections
+// alive and can reuse one the server has already closed (more likely inside
+// the long-lived daemon), which surfaces as a bare "fetch failed" TypeError.
+// HTTP statuses, aborts and timeouts are never retried.
+async function netFetch(url, opts) {
+  try {
+    return await fetch(url, opts);
+  } catch (err) {
+    if (err?.name !== "TypeError" || opts?.signal?.aborted) throw err;
+    await new Promise((r) => setTimeout(r, 150));
+    if (opts?.signal?.aborted) throw err;
+    return fetch(url, opts);
+  }
+}
+
+// "fetch failed" alone hides why; keep the underlying cause.
+function describeError(err) {
+  if (err?.name === "AbortError" || err?.name === "TimeoutError") return "timed out";
+  const cause = err?.cause;
+  const detail = cause ? [cause.code, cause.message].filter(Boolean).join(" ") : "";
+  return detail ? `${err?.message ?? err}: ${detail}` : String(err?.message ?? err);
+}
+
 async function getJson(url, signal, accept = "application/json") {
-  const res = await fetch(url, { signal, headers: { "user-agent": USER_AGENT, accept } });
+  const res = await netFetch(url, { signal, headers: { "user-agent": USER_AGENT, accept } });
   if (!res.ok) throw new HttpStatus(res.status);
   return res.json();
 }
@@ -1024,7 +1047,7 @@ async function lookupNpm(name, signal, cfg) {
   // Existence (a HEAD, cheap even for huge packuments) and traffic in parallel:
   // a miss costs ~2s on each endpoint.
   const [head, dl] = await Promise.allSettled([
-    fetch(`https://registry.npmjs.org/${enc}`, { method: "HEAD", signal, headers: { "user-agent": USER_AGENT } }),
+    netFetch(`https://registry.npmjs.org/${enc}`, { method: "HEAD", signal, headers: { "user-agent": USER_AGENT } }),
     getJson(`https://api.npmjs.org/downloads/point/last-week/${name}`, signal),
   ]);
   if (head.status === "rejected") throw head.reason;
@@ -1122,7 +1145,7 @@ async function lookupGo(path, signal) {
       if (isMissing(err)) continue;
       throw err;
     }
-    const res = await fetch(`https://proxy.golang.org/${goEscape(mod)}/@v/list`, { signal, headers: { "user-agent": USER_AGENT } });
+    const res = await netFetch(`https://proxy.golang.org/${goEscape(mod)}/@v/list`, { signal, headers: { "user-agent": USER_AGENT } });
     const versions = res.ok ? (await res.text()).split("\n").filter(Boolean) : [];
     let createdAt = null;
     if (versions.length <= 2) {
@@ -1214,7 +1237,7 @@ export async function lookup(eco, name, signal, cfg = DEFAULTS) {
     cachePut(eco, name, meta);
     return meta;
   } catch (err) {
-    return { status: "error", error: err?.name === "AbortError" || err?.name === "TimeoutError" ? "timed out" : String(err?.message ?? err) };
+    return { status: "error", error: describeError(err) };
   }
 }
 
