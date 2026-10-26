@@ -166,5 +166,5 @@ The pack must stay one file with no relative imports: Failproof pins the publish
 ## Demo
 
 [`demo/README.md`](demo/README.md) walks through four live scenes in a throwaway project: a hallucinated package
-blocked, a brand-new package paused and approved, a fake dependency written into `package.json` blocked, and the
-same guard on PyPI.
+blocked and the agent recovering, a brand-new package paused and approved, a fake dependency written into
+`package.json` blocked, and one install the guard can't see.

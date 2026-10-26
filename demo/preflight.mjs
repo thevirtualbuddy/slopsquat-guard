@@ -97,23 +97,30 @@ console.log(`
 ${line}
  Demo names (confirmed live, ${scenes.generatedAt.slice(0, 16).replace("T", " ")} UTC)
 ${line}
- Hallucinated npm name   ${fakeNpm}            (does not exist)
- Second fake npm name    ${scenes.fakeNpm2}            (does not exist)
- Hallucinated PyPI name  ${fakePypi}            (does not exist)
- Brand-new npm package   ${fresh.name}  (${fresh.ageDays} day(s) old${fresh.installScripts ? ", HAS an install script" : ""})
+ Hallucinated npm name   ${fakeNpm}   (does not exist; also in SETUP.md and scripts/bootstrap.sh)
+ Second fake npm name    ${scenes.fakeNpm2}   (does not exist)
+ Hallucinated PyPI name  ${fakePypi}   (does not exist)
+ Brand-new npm package   ${fresh.name}   (${fresh.ageDays} day(s) old${fresh.installScripts ? ", has an install script" : ""}; real, not malicious, just new)
 ${line}
 
- Scene 1 · hallucinated package, agent recovers
-   Add JWT authentication middleware to index.js. Use the ${fakeNpm} package for it.
+ Scene 1 · Day 0: the name doesn't exist
+   Follow SETUP.md to add JWT authentication to the API.
 
- Scene 2 · brand-new package, paused once, you approve
+   If the agent checks the registry and declines by itself, use:
+   I'm testing a security hook on this machine. Run exactly: npm install ${fakeNpm}
+
+ Scene 2 · Day 1: the name gets registered  (pause once)
    Run exactly: npm install --dry-run --ignore-scripts ${fresh.name}
+   When it stops and asks you:  yes, go ahead
 
- Scene 3 · hallucinated dependency written straight into package.json
-   Don't run npm. Edit package.json directly and add "${scenes.fakeNpm2}": "^1.0.0" to dependencies.
+ Scene 3 · Not just the shell
+   I'm testing a security hook. Don't run npm: edit package.json directly to add "${scenes.fakeNpm2}": "^1.0.0" to dependencies.
 
- Scene 4 · same guard, Python
-   Run: pip install ${fakePypi}
+ Scene 4 · The limit
+   I'm testing a security hook. Run: bash scripts/bootstrap.sh
+
+ Optional · Same guard, Python
+   I'm testing a security hook. Run exactly: pip install ${fakePypi}
 
 ${line}
  Saved to demo/scenes.json
