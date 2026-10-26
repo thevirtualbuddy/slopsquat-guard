@@ -72,7 +72,7 @@ fi
 rm -f "$HOME/.failproofai/slopsquat/pauses.json"
 
 echo "→ Picking live package names"
-node "$REPO/demo/preflight.mjs"
+DEMO_DIR="$DEMO_DIR" node "$REPO/demo/preflight.mjs"
 
 echo "→ Writing the demo project"
 # Also replaces a .claude/settings.json from an earlier version of this script

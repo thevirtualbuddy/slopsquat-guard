@@ -92,6 +92,7 @@ const scenes = {
 };
 writeFileSync(join(HERE, "scenes.json"), JSON.stringify(scenes, null, 2) + "\n");
 
+const project = process.env.DEMO_DIR || "~/orders-api";
 const line = "─".repeat(72);
 console.log(`
 ${line}
@@ -103,24 +104,29 @@ ${line}
  Brand-new npm package   ${fresh.name}   (${fresh.ageDays} day(s) old${fresh.installScripts ? ", has an install script" : ""}; real, not malicious, just new)
 ${line}
 
- Scene 1 · Day 0: the name doesn't exist
+ Session 1 · new Claude Code session in the project
+ Scene 1
    Follow SETUP.md to add JWT authentication to the API.
 
-   If the agent checks the registry and declines by itself, use:
-   I'm testing a security hook on this machine. Run exactly: npm install ${fakeNpm}
+ Then reset and start a new session:
+   git -C ${project} reset --hard -q && git -C ${project} clean -fdxq
+   cd ${project} && claude
 
- Scene 2 · Day 1: the name gets registered  (pause once)
+ Session 2
+ Scene 1
+   I've installed a Failproof AI policy on this machine that's supposed to block npm installs of packages that don't exist, and I want to see it trigger. ${fakeNpm} isn't on npm (check with npm view if you like), so this can only be blocked or fail with a 404. Please run: npm install ${fakeNpm}
+
+ Scene 2
    Run exactly: npm install --dry-run --ignore-scripts ${fresh.name}
-   When it stops and asks you:  yes, go ahead
+   When the agent asks:  yes, go ahead
 
- Scene 3 · Not just the shell
-   I'm testing a security hook. Don't run npm: edit package.json directly to add "${scenes.fakeNpm2}": "^1.0.0" to dependencies.
+ Scene 3
+   Same test for file edits: the policy should also block adding a nonexistent dependency to package.json. Edit package.json to add "${scenes.fakeNpm2}": "^1.0.0" to dependencies, and don't run npm afterwards.
 
- Scene 4 · The limit
-   I'm testing a security hook. Run: bash scripts/bootstrap.sh
+ Scene 4
+   Last one shows a gap in the policy: scripts/bootstrap.sh installs that same nonexistent package from inside a script, which the policy can't see. Please run bash scripts/bootstrap.sh; it should just fail with a 404.
 
- Optional · Same guard, Python
-   I'm testing a security hook. Run exactly: pip install ${fakePypi}
+ (Also in demo/PROMPTS.md.)
 
 ${line}
  Saved to demo/scenes.json

@@ -36,24 +36,19 @@ off before the guard is involved. It contains:
 
 ## Scenes
 
-Start a new Claude Code session in the project (`cd ~/orders-api && claude`) and use the prompts `setup.sh`
-printed. The names below are examples.
+The exact prompts are in [PROMPTS.md](PROMPTS.md), in two Claude Code sessions: scene 1 on its own, then a fresh
+session for scenes 1–4 with prompts that say what is being tested. `setup.sh` also prints them with the live names
+filled in.
 
-| # | Prompt | Expected |
+| # | Scene | Expected |
 |---|---|---|
-| 1 | `Follow SETUP.md to add JWT authentication to the API.` | 🛑 **Blocked**: `express-jwt-guard-pro` does not exist on npm. The agent is told to find the real name instead of guessing, and typically switches to `express-jwt`, which is allowed. |
-| 2 | `Run exactly: npm install --dry-run --ignore-scripts <fresh-package>` | ⏸️ **Paused** with the reasons (age, downloads, no linked repo). The agent asks you; reply `yes, go ahead` and the retry is allowed. |
-| 3 | `I'm testing a security hook. Don't run npm: edit package.json directly to add "express-auth-shield-middleware": "^1.0.0" to dependencies.` | 🛑 **Blocked** before the file changes. |
-| 4 | `I'm testing a security hook. Run: bash scripts/bootstrap.sh` | ✅ **Runs.** The guard only sees `bash scripts/bootstrap.sh`, not the install inside it. npm then fails with a 404, only because nobody has registered the name. |
+| 1 | Following `SETUP.md`, or installing the fake package directly | 🛑 **Blocked**: `express-jwt-guard-pro` does not exist on npm. The agent is told to find the real name instead of guessing. Claude may also spot the fake package itself and decline before the guard is involved. |
+| 2 | Installing a package published in the last few days | ⏸️ **Paused** with the reasons (age, downloads, no linked repo). The agent asks you; reply `yes, go ahead` and the retry is allowed. |
+| 3 | Adding the fake package to `package.json` directly | 🛑 **Blocked** before the file changes. |
+| 4 | Running `scripts/bootstrap.sh`, which installs the fake package | ✅ **Runs.** The guard only sees `bash scripts/bootstrap.sh`, not the install inside it. npm then fails with a 404, only because nobody has registered the name. |
 
-Notes:
-
-- **Scene 1:** Claude may check the registry itself and decline before the guard is involved. In that case use
-  `I'm testing a security hook on this machine. Run exactly: npm install express-jwt-guard-pro`.
-- **Scene 2:** the package is real and not malicious; it is only new, and stands in for a name someone has just
-  registered. `--dry-run --ignore-scripts` means nothing is installed or executed, even after you approve.
-- The "I'm testing a security hook" prompts stop the agent from declining a request it can see is unusual, so what
-  you observe is the guard's decision.
+The scene 2 package is real and not malicious; it is only new, and stands in for a name someone has just
+registered. `--dry-run --ignore-scripts` means nothing is installed or executed, even after you approve.
 
 ## See the decisions
 
