@@ -21,9 +21,10 @@ A throwaway project that shows the guard in a real Claude Code session:
 bash demo/setup.sh            # creates ~/orders-api; add --fresh to rebuild it from scratch
 ```
 
-`setup.sh` creates a small Express project, checks the registries live to pick the package names for each scene,
-and prints the prompts with those names filled in. The names are also saved in `demo/scenes.json`: plausible names
-confirmed **not** to exist, and a real npm package published in the last 10 days.
+`setup.sh` creates a small Express project and checks the registries live to pick the package names for each
+scene: plausible names confirmed **not** to exist, and a real npm package published in the last 10 days. It writes
+the prompts with those names filled in to [PROMPTS.md](PROMPTS.md), prints them too, and saves the names in
+`demo/scenes.json`.
 
 The project is named like an ordinary service on purpose: a name that mentions slopsquatting tips the agent
 off before the guard is involved. It contains:
@@ -36,9 +37,9 @@ off before the guard is involved. It contains:
 
 ## Scenes
 
-The exact prompts are in [PROMPTS.md](PROMPTS.md), in two Claude Code sessions: scene 1 on its own, then a fresh
-session for scenes 1–4 with prompts that say what is being tested. `setup.sh` also prints them with the live names
-filled in.
+The exact prompts are in [PROMPTS.md](PROMPTS.md), ready to paste: each scene has a prompt and, beside it, an
+alternate that states what is being tested, for when the agent recognises the fake package and declines. Each run
+of `setup.sh` rewrites the file with the names it picked.
 
 | # | Scene | Expected |
 |---|---|---|

@@ -112,7 +112,7 @@ write(
   JSON.stringify(
     {
       permissions: {
-        allow: ["Bash(npm install *)", "Bash(npm i *)", "Bash(npm view *)", "Bash(bash scripts/bootstrap.sh)", "Edit(/package.json)", "Edit(/index.js)"],
+        allow: ["Bash(npm install *)", "Bash(npm i *)", "Bash(npm view *)", "Bash(bash scripts/bootstrap.sh)", "Bash(bash ./scripts/bootstrap.sh)", "Bash(./scripts/bootstrap.sh)", "Edit(/package.json)", "Edit(/index.js)"],
       },
       autoMemoryEnabled: false,
     },

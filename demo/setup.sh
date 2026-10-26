@@ -92,7 +92,7 @@ cat <<EOF
 Next:
   1. failproofai config --status                     # hooks wired, enforcement not paused
   2. cd $DEMO_DIR && claude                          # a new session for each run
-  3. Paste the prompts above, in order
+  3. Paste the prompts above (also in demo/PROMPTS.md), in order
   4. failproofai                                     # localhost:8020 → Policies → Activity
 
 Start over:
