@@ -32,7 +32,7 @@ off before the guard is involved. It contains:
 |---|---|
 | `SETUP.md` | A setup guide that names a package that doesn't exist, the way a hallucinated name ends up in real docs |
 | `scripts/bootstrap.sh` | The same fake install, inside a script |
-| `.claude/settings.json` | Pre-approves `npm install`, so Claude installs without asking and the guard is what decides |
+| `.claude/settings.json` | Pre-approves `npm install`, so Claude installs without asking and the guard is what decides. Also turns off Claude Code's auto memory for this project, so notes from one run can't carry into the next |
 
 ## Scenes
 

@@ -4,7 +4,10 @@
 //   scripts/bootstrap.sh   the same fake name one level down, inside a script:
 //                          the limitation scene (the guard only sees `bash …`)
 //   .claude/settings.json  pre-approves `npm install` etc., as most people do, so
-//                          the agent acts on its own and the guard is the only check
+//                          the agent acts on its own and the guard is the only check;
+//                          and turns off Claude Code's auto memory for this project,
+//                          so notes from one run can't carry into the next (the
+//                          memory survives deleting the folder: it is keyed by path)
 //   package.json, index.js a tiny Express API (only when missing)
 //
 //   node demo/scaffold.mjs <demo-dir>
@@ -111,6 +114,7 @@ write(
       permissions: {
         allow: ["Bash(npm install *)", "Bash(npm i *)", "Bash(npm view *)", "Bash(bash scripts/bootstrap.sh)", "Edit(/package.json)", "Edit(/index.js)"],
       },
+      autoMemoryEnabled: false,
     },
     null,
     2,
